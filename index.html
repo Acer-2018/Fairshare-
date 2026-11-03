@@ -2,195 +2,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FairShare — Split expenses fairly</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7f5;
-      color: #24352e;
-    }
-    header {
-      background: #176b50;
-      color: white;
-      padding: 22px;
-    }
-    header h1 { margin: 0; font-size: 26px; }
-    header p { margin: 7px 0 0; opacity: .9; }
-    main { max-width: 850px; margin: 28px auto; padding: 0 16px; }
-    .card {
-      background: white;
-      padding: 22px;
-      margin-bottom: 18px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px #173b2810;
-    }
-    h2 { margin-top: 0; font-size: 19px; }
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 6px 0;
-      border: 1px solid #d5ded8;
-      border-radius: 8px;
-      font-size: 15px;
-    }
-    button {
-      background: #176b50;
-      color: white;
-      border: 0;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover { background: #10563f; }
-    .expense, .balance {
-      padding: 13px 0;
-      border-bottom: 1px solid #edf0ed;
-    }
-    .amount { font-weight: bold; color: #176b50; }
-    .muted { color: #758179; font-size: 13px; }
-    .empty { color: #758179; }
-    footer { text-align: center; padding: 25px; color: #758179; }
-    @media (min-width: 650px) {
-      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FairShare</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f7f5;color:#20372d;font-family:Arial,sans-serif}
+header{background:#176b50;color:white;padding:22px}
+header h1{margin:0}
+main{max-width:850px;margin:25px auto;padding:0 15px}
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:17px;box-shadow:0 3px 14px #00000009}
+h2{font-size:19px;margin-top:0}
+input,select,button{width:100%;padding:12px;margin:6px 0;border:1px solid #d5ded8;border-radius:8px;font-size:15px}
+button{background:#176b50;color:white;border:0;font-weight:bold;cursor:pointer}
+button.secondary{background:#e8f2ed;color:#176b50}
+button.danger{background:#a33}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.member{padding:10px 0;border-bottom:1px solid #eee}
+.small{font-size:13px;color:#718078}
+.person{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center}
+.person input{margin:3px 0}
+.result{padding:12px;background:#f0f6f2;border-radius:8px;margin-top:10px}
+.amount{font-weight:bold;color:#176b50}
+@media(max-width:450px){.person{grid-template-columns:1fr 100px}}
+</style>
 </head>
 <body>
-  <header>
-    <h1>🌿 FairShare</h1>
-    <p>Share expenses. Stay friends. Keep things fair.</p>
-  </header>
+<header>
+<h1>🌿 FairShare</h1>
+<p>Share expenses. Stay friends. Keep things fair.</p>
+</header>
 
-  <main>
-    <section class="card">
-      <h2>Welcome to your group</h2>
-      <p class="muted">A simple place to track shared expenses.</p>
-      <label for="groupName">Group name</label>
-      <input id="groupName" value="My Friends" onchange="saveGroup()">
-    </section>
+<main>
+<section class="card">
+<h2>My group</h2>
+<input id="groupName" placeholder="Enter group name" value="My Group">
+<p class="small">You are the group creator. Members must be invited to join.</p>
+</section>
 
-    <section class="card">
-      <h2>➕ Add an expense</h2>
-      <form id="expenseForm">
-        <input id="description" placeholder="What was it for? (e.g. Dinner)" required>
-        <div class="fields">
-          <input id="amount" type="number" min="0.01" step="0.01" placeholder="Amount (₱)" required>
-          <select id="paidBy">
-            <option value="You">Paid by You</option>
-            <option value="Alex">Paid by Alex</option>
-            <option value="Jamie">Paid by Jamie</option>
-          </select>
-        </div>
-        <button type="submit">Add expense</button>
-      </form>
-    </section>
+<section class="card">
+<h2>👥 Group members</h2>
+<div id="members"></div>
+<input id="newMember" placeholder="Member's name">
+<button class="secondary" onclick="addMember()">+ Add test member</button>
+<p class="small">Temporary testing only. Real invitation links and accounts are coming next.</p>
+</section>
 
-    <section class="card">
-      <h2>👥 Group members</h2>
-      <p>You · Alex · Jamie</p>
-      <p class="muted">Everyone currently shares expenses equally.</p>
-    </section>
+<section class="card">
+<h2>➕ Add an expense</h2>
+<form id="expenseForm">
+<input id="description" placeholder="Expense description" required>
+<input id="amount" type="number" min="0.01" step="0.01" placeholder="Total amount (₱)" required>
 
-    <section class="card">
-      <h2>📋 Expense history</h2>
-      <div id="expenses"><p class="empty">No expenses yet. Add your first one above!</p></div>
-    </section>
+<label>Who paid?</label>
+<select id="payer"></select>
 
-    <section class="card">
-      <h2>⚖️ Balances</h2>
-      <div id="balances"></div>
-    </section>
-  </main>
+<label>How should this expense be split?</label>
+<select id="splitMode" onchange="drawShares()">
+<option value="equal">Equal split</option>
+<option value="amount">Custom amounts</option>
+<option value="percent">Percentage split</option>
+</select>
 
-  <footer>FairShare · Made for sharing fairly ❤️</footer>
+<p class="small">Select the people involved and enter their share. The payer can also be included.</p>
+<div id="shares"></div>
+<div class="result" id="shareTotal">Select participants to calculate shares.</div>
+<button type="submit">Save expense</button>
+</form>
+</section>
 
-  <script>
-    const members = ["You", "Alex", "Jamie"];
-    let expenses = JSON.parse(localStorage.getItem("fairshare-expenses") || "[]");
+<section class="card">
+<h2>📋 Expense history</h2>
+<div id="expenses"></div>
+</section>
 
-    function money(value) {
-      return "₱" + Number(value).toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
+<section class="card">
+<h2>⚖️ Balances</h2>
+<div id="balances"></div>
+</section>
+</main>
 
-    function save() {
-      localStorage.setItem("fairshare-expenses", JSON.stringify(expenses));
-      render();
-    }
+<script>
+const KEY="fairshare-v2";
+let data=JSON.parse(localStorage.getItem(KEY)||"null")||{
+ members:["You"],expenses:[]
+};
 
-    function saveGroup() {
-      localStorage.setItem("fairshare-group", document.getElementById("groupName").value);
-    }
+function money(n){
+ return "₱"+Number(n).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(data));
+ render();
+}
+function addMember(){
+ const name=document.getElementById("newMember").value.trim();
+ if(!name)return;
+ if(data.members.some(m=>m.toLowerCase()===name.toLowerCase())){
+  alert("This member already exists.");return;
+ }
+ data.members.push(name);
+ document.getElementById("newMember").value="";
+ save();
+ drawShares();
+}
+function removeMember(name){
+ if(name==="You"){alert("The group creator cannot be removed.");return;}
+ if(data.expenses.some(e=>e.shares[name]>0 || e.payer===name)){
+  alert("This member has expense history and cannot be removed in this prototype.");return;
+ }
+ data.members=data.members.filter(m=>m!==name);
+ save();
+}
+function render(){
+ document.getElementById("members").innerHTML=data.members.map(m=>`
+ <div class="member row">
+ <span>${escapeHTML(m)} ${m==="You"?"(Creator)":""}</span>
+ ${m==="You"?"":`<button class="danger" style="width:auto" onclick="removeMember('${escapeHTML(m).replace(/'/g,"&#39;")}')">Remove</button>`}
+ </div>`).join("");
+ document.getElementById("payer").innerHTML=data.members.map(m=>
+ `<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join("");
+ document.getElementById("expenses").innerHTML=data.expenses.length?
+ data.expenses.map(e=>`
+ <div class="member">
+ <strong>${escapeHTML(e.description)}</strong>
+ <span class="amount" style="float:right">${money(e.total)}</span><br>
+ <span class="small">Paid by ${escapeHTML(e.payer)} · ${escapeHTML(e.mode)} split</span>
+ <div class="small">${Object.entries(e.shares).filter(([,v])=>v>0).map(([m,v])=>escapeHTML(m)+": "+money(v)).join(" · ")}</div>
+ </div>`).join(""):'<p class="small">No expenses yet.</p>';
+ renderBalances();
+ drawShares();
+}
+function drawShares(){
+ const mode=document.getElementById("splitMode").value;
+ const total=Number(document.getElementById("amount").value)||0;
+ const old={};
+ document.querySelectorAll("[data-share]").forEach(el=>{
+  if(el.type==="checkbox")old[el.dataset.share]=el.checked;
+  else old[el.dataset.share]=el.value;
+ });
+ const container=document.getElementById("shares");
+ container.innerHTML=data.members.map((m,i)=>{
+  const checked=old[m]===undefined?true:old[m]===true||old[m]==="true";
+  const value=old[m]!==undefined&&old[m]!==true&&old[m]!==false?old[m]:"";
+  return `<div class="person">
+   <label><input type="checkbox" data-share="${escapeHTML(m)}" ${checked?"checked":""} onchange="calculate()"> ${escapeHTML(m)}</label>
+   ${mode==="equal"?'<span class="small">Equal share</span>':
+   `<input type="number" min="0" step="${mode==="percent"?"0.01":"0.01"}" data-value="${escapeHTML(m)}" value="${value}" placeholder="${mode==="percent"?"%":"₱"}" oninput="calculate()">`}
+  </div>`;
+ }).join("");
+ calculate();
+}
+function calculate(){
+ const mode=document.getElementById("splitMode").value;
+ const total=Number(document.getElementById("amount").value)||0;
+ const selected=[...document.querySelectorAll("[data-share]:checked")].map(el=>el.dataset.share);
+ let sum=0;
+ if(mode!=="equal"){
+  selected.forEach(m=>{
+   const v=Number(document.querySelector(`[data-value="${CSS.escape(m)}"]`)?.value)||0;
+   sum+=v;
+  });
+ }else sum=selected.length?total:0;
+ const expected=mode==="percent"?100:total;
+ const label=mode==="percent"?"Percentage total":"Share total";
+ document.getElementById("shareTotal").textContent=
+ selected.length?`${label}: ${mode==="equal"?money(total/selected.length)+" each":mode==="percent"?sum.toFixed(2)+"% / 100%":money(sum)+" / "+money(total)}`:"No participants selected.";
+}
+document.getElementById("amount").addEventListener("input",calculate);
+document.getElementById("splitMode").addEventListener("change",drawShares);
 
-    function render() {
-      const list = document.getElementById("expenses");
-      const balances = document.getElementById("balances");
-
-      if (!expenses.length) {
-        list.innerHTML = '<p class="empty">No expenses yet. Add your first one above!</p>';
-      } else {
-        list.innerHTML = expenses.map((e, i) => `
-          <div class="expense">
-            <strong>${escapeHTML(e.description)}</strong><br>
-            <span class="muted">Paid by ${escapeHTML(e.paidBy)}</span>
-            <span class="amount" style="float:right">${money(e.amount)}</span>
-            <button onclick="removeExpense(${i})" style="width:auto;padding:7px 12px;margin-top:8px;background:#a33">Delete</button>
-          </div>
-        `).join("");
-      }
-
-      const net = Object.fromEntries(members.map(m => [m, 0]));
-      expenses.forEach(e => {
-        net[e.paidBy] += e.amount;
-        members.forEach(m => net[m] -= e.amount / members.length);
-      });
-
-      balances.innerHTML = members.map(m => `
-        <div class="balance">
-          <strong>${m}</strong>
-          <span style="float:right;color:${net[m] >= 0 ? '#176b50' : '#b34b43'}">
-            ${net[m] >= 0 ? "Gets back " : "Owes "}${money(Math.abs(net[m]))}
-          </span>
-        </div>
-      `).join("");
-    }
-
-    function escapeHTML(value) {
-      return String(value).replace(/[&<>"']/g, c => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;",
-        '"': "&quot;", "'": "&#39;"
-      })[c]);
-    }
-
-    function removeExpense(index) {
-      if (confirm("Delete this expense?")) {
-        expenses.splice(index, 1);
-        save();
-      }
-    }
-
-    document.getElementById("expenseForm").addEventListener("submit", function(event) {
-      event.preventDefault();
-      const description = document.getElementById("description").value.trim();
-      const amount = Number(document.getElementById("amount").value);
-      const paidBy = document.getElementById("paidBy").value;
-
-      if (!description || !Number.isFinite(amount) || amount <= 0) return;
-
-      expenses.push({ description, amount, paidBy });
-      this.reset();
-      save();
-    });
-
-    const savedGroup = localStorage.getItem("fairshare-group");
-    if (savedGroup) document.getElementById("groupName").value = savedGroup;
-
-    render();
-  </script>
+document.getElementById("expenseForm").addEventListener("submit",e=>{
+ e.preventDefault();
+ const description=document.getElementById("description").value.trim();
+ const total=Number(document.getElementById("amount").value);
+ const payer=document.getElementById("payer").value;
+ const mode=document.getElementById("splitMode").value;
+ const selected=[...document.querySelectorAll("[data-share]:checked")].map(el=>el.dataset.share);
+ if(!description||!Number.isFinite(total)||total<=0||!selected.length){
+  alert("Enter a description, valid amount, and at least one participant.");return;
+ }
+ let shares={};
+ if(mode==="equal"){
+  selected.forEach(m=>shares[m]=total/selected.length);
+ }else{
+  let sum=0;
+  selected.forEach(m=>{
+   const v=Number(document.querySelector(`[data-value="${CSS.escape(m)}"]`)?.value);
+   if(!Number.isFinite(v)||v<0){sum=NaN;return;}
+   shares[m]=v;sum+=v;
+  });
+  const expected=mode==="percent"?100:total;
+  if(!Number.isFinite(sum)||Math.abs(sum-expected)>0.011){
+   alert(mode==="percent"?"Percentages must total exactly 100%.":"Custom amounts must add up to the expense total.");return;
+  }
+  if(mode==="percent"){
+   Object.keys(shares).forEach(m=>shares[m]=total*shares[m]/100);
+  }
+ }
+ data.expenses.unshift({description,total,payer,mode,shares});
+ e.target.reset();
+ document.getElementById("groupName").value ||= "My Group";
+ save();
+});
+function renderBalances(){
+ const net=Object.fromEntries(data.members.map(m=>[m,0]));
+ data.expenses.forEach(e=>{
+  net[e.payer]+=e.total;
+  Object.entries(e.shares).forEach(([m,v])=>net[m]-=v);
+ });
+ document.getElementById("balances").innerHTML=data.members.map(m=>`
+ <div class="member row">
+ <strong>${escapeHTML(m)}</strong>
+ <span style="color:${net[m]>=0?"#176b50":"#b34b43"}">
+ ${net[m]>=0?"Gets back ":"Owes "}${money(Math.abs(net[m]))}
+ </span>
+ </div>`).join("");
+}
+render();
+</script>
 </body>
 </html>
