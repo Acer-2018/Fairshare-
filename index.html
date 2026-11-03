@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairShare — Split expenses fairly</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7f5;
+      color: #24352e;
+    }
+    header {
+      background: #176b50;
+      color: white;
+      padding: 22px;
+    }
+    header h1 { margin: 0; font-size: 26px; }
+    header p { margin: 7px 0 0; opacity: .9; }
+    main { max-width: 850px; margin: 28px auto; padding: 0 16px; }
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      box-shadow: 0 3px 14px #173b2810;
+    }
+    h2 { margin-top: 0; font-size: 19px; }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: 1px solid #d5ded8;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    button {
+      background: #176b50;
+      color: white;
+      border: 0;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background: #10563f; }
+    .expense, .balance {
+      padding: 13px 0;
+      border-bottom: 1px solid #edf0ed;
+    }
+    .amount { font-weight: bold; color: #176b50; }
+    .muted { color: #758179; font-size: 13px; }
+    .empty { color: #758179; }
+    footer { text-align: center; padding: 25px; color: #758179; }
+    @media (min-width: 650px) {
+      .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌿 FairShare</h1>
+    <p>Share expenses. Stay friends. Keep things fair.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Welcome to your group</h2>
+      <p class="muted">A simple place to track shared expenses.</p>
+      <label for="groupName">Group name</label>
+      <input id="groupName" value="My Friends" onchange="saveGroup()">
+    </section>
+
+    <section class="card">
+      <h2>➕ Add an expense</h2>
+      <form id="expenseForm">
+        <input id="description" placeholder="What was it for? (e.g. Dinner)" required>
+        <div class="fields">
+          <input id="amount" type="number" min="0.01" step="0.01" placeholder="Amount (₱)" required>
+          <select id="paidBy">
+            <option value="You">Paid by You</option>
+            <option value="Alex">Paid by Alex</option>
+            <option value="Jamie">Paid by Jamie</option>
+          </select>
+        </div>
+        <button type="submit">Add expense</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>👥 Group members</h2>
+      <p>You · Alex · Jamie</p>
+      <p class="muted">Everyone currently shares expenses equally.</p>
+    </section>
+
+    <section class="card">
+      <h2>📋 Expense history</h2>
+      <div id="expenses"><p class="empty">No expenses yet. Add your first one above!</p></div>
+    </section>
+
+    <section class="card">
+      <h2>⚖️ Balances</h2>
+      <div id="balances"></div>
+    </section>
+  </main>
+
+  <footer>FairShare · Made for sharing fairly ❤️</footer>
+
+  <script>
+    const members = ["You", "Alex", "Jamie"];
+    let expenses = JSON.parse(localStorage.getItem("fairshare-expenses") || "[]");
+
+    function money(value) {
+      return "₱" + Number(value).toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function save() {
+      localStorage.setItem("fairshare-expenses", JSON.stringify(expenses));
+      render();
+    }
+
+    function saveGroup() {
+      localStorage.setItem("fairshare-group", document.getElementById("groupName").value);
+    }
+
+    function render() {
+      const list = document.getElementById("expenses");
+      const balances = document.getElementById("balances");
+
+      if (!expenses.length) {
+        list.innerHTML = '<p class="empty">No expenses yet. Add your first one above!</p>';
+      } else {
+        list.innerHTML = expenses.map((e, i) => `
+          <div class="expense">
+            <strong>${escapeHTML(e.description)}</strong><br>
+            <span class="muted">Paid by ${escapeHTML(e.paidBy)}</span>
+            <span class="amount" style="float:right">${money(e.amount)}</span>
+            <button onclick="removeExpense(${i})" style="width:auto;padding:7px 12px;margin-top:8px;background:#a33">Delete</button>
+          </div>
+        `).join("");
+      }
+
+      const net = Object.fromEntries(members.map(m => [m, 0]));
+      expenses.forEach(e => {
+        net[e.paidBy] += e.amount;
+        members.forEach(m => net[m] -= e.amount / members.length);
+      });
+
+      balances.innerHTML = members.map(m => `
+        <div class="balance">
+          <strong>${m}</strong>
+          <span style="float:right;color:${net[m] >= 0 ? '#176b50' : '#b34b43'}">
+            ${net[m] >= 0 ? "Gets back " : "Owes "}${money(Math.abs(net[m]))}
+          </span>
+        </div>
+      `).join("");
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+      })[c]);
+    }
+
+    function removeExpense(index) {
+      if (confirm("Delete this expense?")) {
+        expenses.splice(index, 1);
+        save();
+      }
+    }
+
+    document.getElementById("expenseForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const description = document.getElementById("description").value.trim();
+      const amount = Number(document.getElementById("amount").value);
+      const paidBy = document.getElementById("paidBy").value;
+
+      if (!description || !Number.isFinite(amount) || amount <= 0) return;
+
+      expenses.push({ description, amount, paidBy });
+      this.reset();
+      save();
+    });
+
+    const savedGroup = localStorage.getItem("fairshare-group");
+    if (savedGroup) document.getElementById("groupName").value = savedGroup;
+
+    render();
+  </script>
+</body>
+</html>
